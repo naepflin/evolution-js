@@ -12,12 +12,12 @@ angular.module('myApp.view1', ['ngRoute'])
 .controller('View1Ctrl', ['$scope', '$window', function($scope, $window) {
 
 // init
-	
+
 	$scope.animals = [];
 	var fields = [];
 	$scope.processCounter = 0;
 	$scope.processRunning = false;
-			
+
 	// generate fields
 	var nbFieldsX = 10;
 	var nbFieldsY = 10;
@@ -35,7 +35,7 @@ angular.module('myApp.view1', ['ngRoute'])
 		}
 		fields.push(row);
 	}
-	
+
 // end init
 
 
@@ -43,14 +43,14 @@ angular.module('myApp.view1', ['ngRoute'])
 	$scope.start = function() {
 
 		$scope.processRunning = true;
-			
+
 		while ($scope.processRunning)
 		{
 			if ($scope.animals.length < $scope.stopAt) {
 				$scope.stop();
 				$window.alert("Only " + $scope.stopAt + " animals left.");
 			}
-	
+
 			if ($scope.animals.length < 1) {
 				$scope.stop();
 				$window.alert("All animals died.");
@@ -61,7 +61,7 @@ angular.module('myApp.view1', ['ngRoute'])
 				$scope.animals[i].move();
 				// include population statistics here
 			}
-			
+
 			// all fields grow
 			for (var i = 0; i < nbFieldsX; i++) {
 				var row = fields[i];
@@ -72,7 +72,7 @@ angular.module('myApp.view1', ['ngRoute'])
 			$scope.processCounter++;
 		}
 	}
-	
+
 	$scope.stop = function() {
 		$scope.processRunning = false;
 	}
@@ -82,7 +82,7 @@ angular.module('myApp.view1', ['ngRoute'])
 			$scope.animals.push(new animal(null, null));
 		}
 	}
-	
+
 	$scope.resetProcessCounter = function() {
 		$scope.processCounter = 0;
 	}
@@ -92,14 +92,14 @@ angular.module('myApp.view1', ['ngRoute'])
 			animal.die();
 		});
 	}
-	
-	
 
-	
+
+
+
 	// class "field"
-	
+
 	function field(onBorder) {
-		
+
 		//fieldType = 1: grows food 1
 		//fieldType = 2: grows food 2
 		//fieldType = 3: on border
@@ -118,7 +118,7 @@ angular.module('myApp.view1', ['ngRoute'])
 		this.grow = function() {
 			this.pasture += 500;
 		};
-		
+
 		this.use = function() {
 			if (this.pasture > 0) {
 				this.pasture -= 100;
@@ -126,14 +126,14 @@ angular.module('myApp.view1', ['ngRoute'])
 			}
 			return false;
 		};
-		
+
 		this.newAnimal = function (animalId) {
 			this.animalId = animalId;
 		};
 	}
-	
+
 	// class "animal"
-	
+
 	function animal(father, mother) {
 
 		// state
@@ -147,7 +147,7 @@ angular.module('myApp.view1', ['ngRoute'])
 		this.sex;
 		this.food1Specialization;
 		this.food2Specialization;
-		
+
 		// behavior
 		this.food1Preference;
 		this.food2Preference;
@@ -157,7 +157,7 @@ angular.module('myApp.view1', ['ngRoute'])
 		this.waitBonus;
 
 	// animal init
-		
+
 		var fieldX = 10;
 		var fieldY = 10;
 
@@ -165,35 +165,69 @@ angular.module('myApp.view1', ['ngRoute'])
 		if (father == null || mother == null) {
 			this.energy = 100;
 			this.sex = Math.floor(Math.random() * 2);
-			this.age = Math.floor(Math.random() * 200);
+			this.age = Math.floor(Math.random() * 200); // should normally be 0
 			this.positionX = Math.floor(Math.random() * (fieldX-2)) + 1;
-			this.positionY = Math.floor(Math.random() * (fieldY-2)) + 1;		//Ränder dürfen nicht besetzt werden
-			
+			this.positionY = Math.floor(Math.random() * (fieldY-2)) + 1;		//borders should not be occupied
+
 			this.food1Preference = Math.floor(Math.random() * 2000);
 			this.food2Preference = Math.floor(Math.random() * 2000);
-	
-			this.food1specialization = Math.floor(Math.random() * 1000);
-			this.food2specialization = Math.floor(Math.random() * 1000);
-			
+
+			this.food1Specialization = Math.floor(Math.random() * 1000);
+			this.food2Specialization = Math.floor(Math.random() * 1000);
+
 			//"künstliche Verteilung"
 			/*if (Math.floor(Math.random() * 40) == 0)
 			{
 				this.food1Preference = 10;
-				this.food1specialization = 10;
+				this.food1Specialization = 10;
 			}
 			if (Math.floor(Math.random() * 40) == 0)
 			{
 				this.food2Preference = 10;
-				this.food2specialization = 10;
+				this.food2Specialization = 10;
 			}*/
-			
+
 			this.waitPreference = Math.floor(Math.random() * 100);
 			this.procreatePreference = Math.floor(Math.random() * 100);
 			this.waitBonus = Math.floor(Math.random() * 500);
-			//Richtwert für andere Verhaltensparameter:
+			//one of the parameters is fixed for reference:
 			this.procreateOwnSpeciesPreference = 2000;
+
+      this.move = function () {
+        {
+        	this.age += 1;
+          //deduct energy for life
+          this.reduceEnergy(this.food1Specialization * this.food1EnergyLossFactor); //should be around 20
+          this.reduceEnergy(this.food2Specialization * this.food2EnergyLossFactor); //should be around 20
+
+          // animal dies after 200 rounds or if energy is negative:
+        	if(this.energy < 0 || this.age > 200)
+        	{
+        		this.die();
+        	}
+        	else
+        	{
+        	//decision is initiated
+        		this.decide();
+        	}
+
+        	return self;
+        }
+      }
+
+      this.reduceEnergy = function(reduction) {
+        this.energy -= reduction;
+      }
+
+      this.die = function() {
+        alert("animal dies");
+      }
+
+      this.decide = function() {
+        alert("animal decides");
+      }
 		}
-		
+
 		// procreated animals:
 		else {
 			this.energy = 200;
@@ -210,9 +244,9 @@ angular.module('myApp.view1', ['ngRoute'])
 			this.procreateOwnSpeciesPreference = 2000;
 			this.waitBonus = (father.waitBonus + mother.waitBonus)/2;
 			// - form
-			this.food1specialization = (father.food1specialization + mother.food1specialization)/2;
-			this.food2specialization = (father.food2specialization + mother.food2specialization)/2;
-			
+			this.food1Specialization = (father.food1Specialization + mother.food1Specialization)/2;
+			this.food2Specialization = (father.food2Specialization + mother.food2Specialization)/2;
+
 			// mutation
 			// - behaviour
 			this.food1Preference = this.food1Preference * (1.200 - 0.400 * Math.random());
@@ -221,15 +255,15 @@ angular.module('myApp.view1', ['ngRoute'])
 			this.procreatePreference = this.procreatePreference * (1.200 - 0.400 * Math.random());
 			this.waitBonus = this.waitBonus * (1.200 - 0.400 * Math.random());
 			// - form
-			this.food1specialization = this.food1specialization * (1.200 - 0.400 * Math.random());
-			this.food2specialization = this.food2specialization * (1.200 - 0.400 * Math.random());
-	
+			this.food1Specialization = this.food1Specialization * (1.200 - 0.400 * Math.random());
+			this.food2Specialization = this.food2Specialization * (1.200 - 0.400 * Math.random());
+
 		}
 	// end animal init
-	
-	
+
+
 	// animal methods
-	
+
 		this.eat = function (energy) {
 			this.energy += energy;
 		}
@@ -250,8 +284,8 @@ angular.module('myApp.view1', ['ngRoute'])
 		this.alreadyMovedChanged = function (changeX, changeY) {
 			this.alreadyMoved = !this.alreadyMoved;
 		}
-		
+
 	// end animal methods
-	
+
 	}
 }]);
